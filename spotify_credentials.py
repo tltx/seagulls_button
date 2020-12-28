@@ -26,7 +26,7 @@ HTTP/1.0 200 OK
 Content-Type: text/html
 
 <h1>Authenticate with Spotify</h1>
-1) Go to <a target="_blank" href="https://beta.developer.spotify.com/dashboard/applications">Spotify for Developers</a> and "Create an app"<br>
+1) Go to <a target="_blank" href="https://developer.spotify.com/dashboard/applications">Spotify for Developers</a> and "Create an app"<br>
 2) Edit Settings on the app, add "{redirect_uri}" as a Redirect URI and Save<br>
 3) Enter Client ID below, submit and then allow the scopes for the app.<br><br>
 
@@ -89,13 +89,12 @@ def setup_authorization_code_flow(default_client_id='', default_client_secret=''
     device_selected = False
 
     while not device_selected:
-        res = s.accept()
-        client_sock = res[0]
+        client_sock, _ = s.accept()
 
-        if not micropython_optimize:
-            client_stream = client_sock.makefile("rwb")
-        else:
+        if micropython_optimize:
             client_stream = client_sock
+        else:
+            client_stream = client_sock.makefile("rwb")
 
         req = client_stream.readline().decode()
         content_length = None
@@ -110,8 +109,8 @@ def setup_authorization_code_flow(default_client_id='', default_client_secret=''
             if h == "" or h == "\r\n":
                 break
 
-        def write_response(response):
-            client_stream.write(response.encode())
+        def write_response(resp):
+            client_stream.write(resp.encode())
             client_stream.close()
             if not micropython_optimize:
                 client_sock.close()
@@ -298,7 +297,7 @@ def parse_qsl(qs):
             continue
         nv = name_value.split('=', 1)
         if len(nv) != 2:
-                continue
+            continue
         if len(nv[1]):
             name = nv[0].replace('+', ' ')
             name = unquote(name)
@@ -347,12 +346,12 @@ def unquote_plus(s):
 def urlencode(query):
     if isinstance(query, dict):
         query = query.items()
-    l = []
+    li = []
     for k, v in query:
         if not isinstance(v, list):
             v = [v]
         for value in v:
             k = quote_plus(str(k))
             v = quote_plus(str(value))
-            l.append(k + '=' + v)
-    return '&'.join(l)
+            li.append(k + '=' + v)
+    return '&'.join(li)
